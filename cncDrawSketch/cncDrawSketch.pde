@@ -43,7 +43,8 @@
 
 void setup(){
   
-   size(600,1400);
+   //size(600,1400);
+   size(1024,800);
    noLoop();
    
 // Initialise the serial port and the machine
@@ -60,21 +61,25 @@ void draw(){
  // the only function that matters is bezierPlot()
  // which is the interface to the rest of the API
  
+ 
+ linePlot(500,100,500,height-100);
+ rectPlot(100,100,200,400);
   
- int bezIter = 5;
-  int randX3=(int)random(width/4);
-  int randY3=(int)random(height/4);
-  int randX4=(int)random(width);
-  int randY4=(int)random(height);
-for (int c=1; c <= bezIter; c++){
-  int rand = (int)random(100)+50;
-  int randX1=(int)random(width);
-  int randY1=(int)random(height);
-  int randX2=(int)random(width);
-  int randY2=(int)random(height);
-  for (int b=1; b <= bezIter; b++){
-    //  bezierPlot(rand*b,height-rand*b,0,rand*b,width,rand*b,width-rand*b,50+rand*b,100);
-  bezierPlot(randX3,randY3,randX1+b*rand,randY1+b*rand,randX2-b*rand,randY2-b*rand,randX4,randY4,60);
-  }
-}
+ //int bezIter = 5;
+ // int randX3=(int)random(width/4);
+ // int randY3=(int)random(height/4);
+ // int randX4=(int)random(width);
+ // int randY4=(int)random(height);
+ //for (int c=1; c <= bezIter; c++){
+ // int rand = (int)random(100)+50;
+ // int randX1=(int)random(width);
+ // int randY1=(int)random(height);
+ // int randX2=(int)random(width);
+ // int randY2=(int)random(height);
+ // for (int b=1; b <= bezIter; b++){
+ //   //  bezierPlot(rand*b,height-rand*b,0,rand*b,width,rand*b,width-rand*b,50+rand*b,100);
+ // bezierPlot(randX3,randY3,randX1+b*rand,randY1+b*rand,randX2-b*rand,randY2-b*rand,randX4,randY4,60);
+ // linePlot(randX1*b*rand,randY1*b*rand,randX2*b*rand,randY2*b*rand);
+ // }
+//}
 }

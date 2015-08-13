@@ -64,6 +64,8 @@ import processing.serial.*;
 
   Shape shapes; // this is the super class for all drawing.
   bezierShape beziers; // this is sub class for bezier curves - employed because I thought it's be a good test case.
+  lineShape lines; 
+  rectShape rects;
   
   ArrayList<Shape> shapesList  = new ArrayList<Shape>(); 
   
@@ -272,7 +274,81 @@ class bezierShape extends Shape {
 
 }
 
-// end of the bezierShape subclass.
+
+// working on line addition
+
+class lineShape extends Shape {                            
+  
+  int x1,y1,x2,y2;
+
+  lineShape(int x1,int y1,int x2,int y2) {  
+ 
+    super();
+    this.x1 = x1;
+    this.y1 = y1;
+    this.x2 = x2;
+    this.y2 = y2;
+    
+  }
+  
+  
+ void lineFill () { 
+  
+    if (x1 > 0 && x1 <= width && y1 > 0 && y1<=height && x2 > 0 && x2 <= width && y2 > 0 && y2 <= height){                                                   
+      p.add(new int[]{(int)x1,(int)y1});                                                 
+      p.add(new int[]{(int)x2,(int)y2}); 
+    } else {
+      return;
+    }
+   
+   
+    
+ }
+}
+
+// working on rect addition
+
+class rectShape extends Shape { 
+  
+  
+  int a,b,c,d;
+  
+
+  rectShape(int a,int b,int c,int d) {  
+ 
+    super();
+    this.a = a;
+    this.b = b;
+    this.c = c;
+    this.d = d;
+    //this.tl = tl;
+    //this.tr = tr;
+    //this.br = br;
+    //this.bl = bl;
+    
+  }
+  
+  
+ void rectFill () { 
+  
+    if (a > 0 && a <= width && b > 0 && b<=height && a+c > 0 && a+c <= width && b+d > 0 && b+d <= height){                                                   
+      p.add(new int[]{(int)a,(int)b});                                                 
+      p.add(new int[]{(int)a+c,(int)b});
+      p.add(new int[]{(int)a+c,(int)b+d});                                                 
+      p.add(new int[]{(int)a,(int)b+d}); 
+      p.add(new int[]{(int)a,(int)b});
+    } else {
+      return;
+    }
+   
+   
+    
+ }
+}
+   
+  
+
+// end of the rectShape subclass.
 
 
 // below function is just a control function used to hide/contain new shape/fill/drawPoints
@@ -284,6 +360,26 @@ void bezierPlot(int x1,int y1,int c1,int d1,int c2,int d2,int x2,int y2,int step
   shapesList.add(beziers);                                           // add the new shape to a master arrayList of shapes
   beziers.bezierFill();                                              // fill the coordinate arrayList with coords
   beziers.drawPoints();                                              // draw the curve on the screen  
+  
+  
+}
+
+void linePlot(int x1,int y1,int x2,int y2){
+ 
+  lines = new lineShape(x1,y1,x2,y2);           //make a new line instance
+  shapesList.add(lines);                     // add the new shape to a master arrayList of shapes
+  lines.lineFill();                        // fill the coordinate arrayList with coords
+  lines.drawPoints();                        // draw the line on the screen  
+  
+  
+}
+
+void rectPlot(int a,int b,int c,int d){
+ 
+  rects = new rectShape(a,b,c,d);           //make a new rect instance
+  shapesList.add(rects);                               // add the new shape to a master arrayList of shapes
+  rects.rectFill();                                    // fill the coordinate arrayList with coords
+  rects.drawPoints();                                  // draw the line on the screen  
   
   
 }
