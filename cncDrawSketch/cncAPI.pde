@@ -142,6 +142,8 @@ if (key == 'w') {
   machineInit(myPort);
   } else if (key == 'z'){
    zeroInit(myPort);
+  } else if (key == 'v'){
+   MovetoZeroInit();
   }
 }  
   
@@ -379,6 +381,13 @@ void machineInit(Serial myPort){
     println("moved to " + drillXpos + ", " + drillYpos  + ", " + drillZpos);
  }
  
+ 
+void MovetoZeroInit(){      
+     myPort.write("PA " + drillXInit + ", " + drillYInit + ", " + drillZInit +  ";" + (char)13 + (char)26 );
+     drillXpos = drillYpos = drillZpos =0;
+  }
+
+ 
 
 // this function zeros the current cut position - set the XYZ 0 and press C to intialize the back od drill and start it.
  
@@ -426,5 +435,3 @@ public void serialEvent(Serial myPort){
   
 
 }
-
-
