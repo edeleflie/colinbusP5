@@ -44,7 +44,7 @@
 void setup(){
   
    //size(600,1400);
-   size(1024,800);
+   size(800,600);
    noLoop();
    
 // Initialise the serial port and the machine
@@ -56,30 +56,94 @@ void setup(){
  
 
 void draw(){
+
+//bezierTest();
+//imageDots();
+
+lineTest();
+
+
+}
+
+void imageDots() {
  
- // all of the below is just to draw something.
+  //image dot attempt
+PImage img = loadImage("dmr.png");
+int gridRes=12000;
+drillBit=7;
+img.resize(width,height);
+image(img,0,0);
+filter(GRAY);
+loadPixels();
+background(255);
+noFill();
+noStroke();
+float fwidth = (float)width;
+float fheight = (float)height;
+int ySide=(int)(sqrt(gridRes/(fwidth/fheight)));
+int xSide=(int)(ySide*(fwidth/fheight));
+println(ySide);
+println(xSide);
+
+for (int i = 0; i < xSide; i++) {
+  for (int j = 0; j < ySide; j++) {
+    int t=0;
+     for (int x = 0; x < width/xSide; x++) {
+       for (int y = 0; y < height/ySide; y++) {
+          t += brightness((pixels[((j*(height/ySide)*width)+(y*width)+(i*(width/xSide))+x)]));
+          
+       }
+     }
+  int m = t/((width/xSide)*(height/ySide));
+  fill(m);
+  noStroke();
+  dotPlot((i*(width/xSide))+(width/xSide/2),(j*(height/ySide))+(height/ySide/2),m,drillBit);
+  
+       
+     }
+
+}
+
+//updatePixels();
+  
+  
+   
+  
+  
+}
+
+void bezierTest() {
+  
+  // all of the below is just to draw something.
  // the only function that matters is bezierPlot()
  // which is the interface to the rest of the API
- 
- 
- linePlot(500,100,500,height-100);
- rectPlot(100,100,200,400);
   
- //int bezIter = 5;
- // int randX3=(int)random(width/4);
- // int randY3=(int)random(height/4);
- // int randX4=(int)random(width);
- // int randY4=(int)random(height);
- //for (int c=1; c <= bezIter; c++){
- // int rand = (int)random(100)+50;
- // int randX1=(int)random(width);
- // int randY1=(int)random(height);
- // int randX2=(int)random(width);
- // int randY2=(int)random(height);
- // for (int b=1; b <= bezIter; b++){
- //   //  bezierPlot(rand*b,height-rand*b,0,rand*b,width,rand*b,width-rand*b,50+rand*b,100);
- // bezierPlot(randX3,randY3,randX1+b*rand,randY1+b*rand,randX2-b*rand,randY2-b*rand,randX4,randY4,60);
- // linePlot(randX1*b*rand,randY1*b*rand,randX2*b*rand,randY2*b*rand);
- // }
-//}
+ int bezIter = 5;
+ int randX3=(int)random(width/4);
+ int randY3=(int)random(height/4);
+ int randX4=(int)random(width);
+ int randY4=(int)random(height);
+ for (int c=1; c <= bezIter; c++){
+ int rand = (int)random(100)+50;
+ int randX1=(int)random(width);
+ int randY1=(int)random(height);
+ int randX2=(int)random(width);
+ int randY2=(int)random(height);
+ for (int b=1; b <= bezIter; b++){
+ // bezierPlot(rand*b,height-rand*b,0,rand*b,width,rand*b,width-rand*b,50+rand*b,100);
+  bezierPlot(randX3,randY3,randX1+b*rand,randY1+b*rand,randX2-b*rand,randY2-b*rand,randX4,randY4,60);
+ }
+} 
+  
+}
+
+void lineTest() {
+  int rows = 10;
+   int cols = 20;  
+  // noFill();
+  for (int x = 0; x < rows; x++) {
+    for (int y = 0; y < cols; y++) { 
+      linePlot((x+1)*width/(rows+1),2,(y+1)*height/(cols+1),height-2,0);
+    }
+  }
 }

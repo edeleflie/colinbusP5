@@ -56,6 +56,8 @@ import processing.serial.*;
   int drillCut = 30; //depth of cut - 30 is a good minimum cut for testing etching etc.
   int drillDown = 0; // absolute Z point to drop drill to cutting depth.
   int drillClearance = 100; // height above drilZinit to raise drill by when moving betwen cuts
+  int zScale = 3;
+  int drillBit = 5;
   
   int drillXInit,drillYInit,drillZInit; // intialized zero positions X,Y,Z
   int drillZpos,drillXpos,drillYpos;  // current drill program state
@@ -66,6 +68,8 @@ import processing.serial.*;
   bezierShape beziers; // this is sub class for bezier curves - employed because I thought it's be a good test case.
   lineShape lines; 
   rectShape rects;
+  ellipseShape ellipses;
+  dotShape dots;
   
   ArrayList<Shape> shapesList  = new ArrayList<Shape>(); 
   
@@ -168,11 +172,20 @@ class Shape {
   //Draw to screen:
   
   void drawPoints () { 
-  int a,b,c=0,d=0; //holders for stepped coordinates
-  
+  int a,b,z,c=0,d=0; //holders for stepped coordinates
+  //noStroke();
+  fill(0); //default fill needs removing
   for( int j = 0; j < p.size(); j++ ) {   // run though arrayList of shape called p    
            a = (p.get(j)[0]);             // get X coordinate
-           b = (p.get(j)[1]);             // get y coordinate
+           b = (p.get(j)[1]); 
+           z = (p.get(j)[2]);
+          
+          //  get y coordinate           
+          if (p.size()==1){
+          fill(z);
+          ellipse(a,b,drillBit,drillBit);  
+          }
+          stroke(z);
            if (j > 0) {                   // skip if this is first point and therefore not yet a line
              line(c,d,a,b);              // draw the line 
            }
@@ -188,7 +201,8 @@ class Shape {
   // scale is approx 4 pixels per mm.
   
   void printToCNC(){
-    int a,b;                       // x and y pairs               
+    int a,b,z;                       // x,y,z  
+  
     message=("@ZD 40.0;" );        // set z move speed.
     myPort.write(message);         // write z move speed to machine
     println(message);              //print command to console  
@@ -201,7 +215,9 @@ class Shape {
            a = (p.get(j)[0]);                              // get x coordinate
            a = a*scale+drillXInit;                         // scale x (scale set at head) and add offset based on zeroInit() values (drillXinit)
            b = (p.get(j)[1]);                              // get y coordinate
-           b = b*scale+drillYInit;                         // scale y and add offset based in zeroInit() function
+           b = b*scale+drillYInit;                       // scale y and add offset based in zeroInit() function
+           z = (255-(p.get(j)[2]))/zScale;
+           drillDown = drillZInit + drillCut + z; 
            message=("PA " + (a) +", " + (b) + " ;");       // write point command 
            myPort.write(message);                          // to serial myPort
            println(message);                               // print to console   
@@ -230,9 +246,9 @@ class Shape {
 
 class bezierShape extends Shape {                            
   
-  int x1,y1,c1,d1,c2,d2,x2,y2,steps;                    // kept exactly the same as Bezier() with the steps added a a way of defining resolution of curve.
+  int x1,y1,c1,d1,c2,d2,x2,y2,steps,z1;                    // kept exactly the same as Bezier() with the steps added a a way of defining resolution of curve.
 
-  bezierShape(int x1,int y1,int c1,int d1,int c2,int d2,int x2,int y2,int steps) {  //this is what I hope to do with each of procssing draw functions - a shape/subclass for each
+  bezierShape(int x1,int y1,int c1,int d1,int c2,int d2,int x2,int y2,int steps,int z1) {  //this is what I hope to do with each of procssing draw functions - a shape/subclass for each
  
     super();
     this.x1 = x1;
@@ -244,6 +260,7 @@ class bezierShape extends Shape {
     this.x2 = x2;
     this.y2 = y2;
     this.steps = steps;
+    this.z1 = z1;
     
   }
   
@@ -259,7 +276,7 @@ class bezierShape extends Shape {
     float y = bezierPoint(y1,d1,d2,y2,t);
 
       if (x > 0 && x <= width && y > 0 && y<=height){   //if the point is on the screen add it to the                                                    
-      p.add(new int[]{(int)x,(int)y}); // int array pair within the shapes array list.
+      p.add(new int[]{(int)x,(int)y,z1}); // int array pair within the shapes array list.
     } else {
       return;
     }
@@ -279,15 +296,19 @@ class bezierShape extends Shape {
 
 class lineShape extends Shape {                            
   
-  int x1,y1,x2,y2;
+  int x1,y1,x2,y2,z1,z2;
 
-  lineShape(int x1,int y1,int x2,int y2) {  
+  lineShape(int x1,int y1,int x2,int y2, int z1, int z2) {  
  
     super();
     this.x1 = x1;
     this.y1 = y1;
     this.x2 = x2;
     this.y2 = y2;
+    this.z1 = z1;
+    this.z2 = z2;
+    
+    
     
   }
   
@@ -295,8 +316,8 @@ class lineShape extends Shape {
  void lineFill () { 
   
     if (x1 > 0 && x1 <= width && y1 > 0 && y1<=height && x2 > 0 && x2 <= width && y2 > 0 && y2 <= height){                                                   
-      p.add(new int[]{(int)x1,(int)y1});                                                 
-      p.add(new int[]{(int)x2,(int)y2}); 
+      p.add(new int[]{x1,y1,z1});                                                 
+      p.add(new int[]{x2,y2,z1}); 
     } else {
       return;
     }
@@ -311,16 +332,17 @@ class lineShape extends Shape {
 class rectShape extends Shape { 
   
   
-  int a,b,c,d;
+  int a,b,c,d,z1;
   
 
-  rectShape(int a,int b,int c,int d) {  
+  rectShape(int a,int b,int c,int d,int z1) {  
  
     super();
     this.a = a;
     this.b = b;
     this.c = c;
     this.d = d;
+    this.z1 = z1;
     //this.tl = tl;
     //this.tr = tr;
     //this.br = br;
@@ -332,11 +354,11 @@ class rectShape extends Shape {
  void rectFill () { 
   
     if (a > 0 && a <= width && b > 0 && b<=height && a+c > 0 && a+c <= width && b+d > 0 && b+d <= height){                                                   
-      p.add(new int[]{(int)a,(int)b});                                                 
-      p.add(new int[]{(int)a+c,(int)b});
-      p.add(new int[]{(int)a+c,(int)b+d});                                                 
-      p.add(new int[]{(int)a,(int)b+d}); 
-      p.add(new int[]{(int)a,(int)b});
+      p.add(new int[]{a,b,z1});                                                 
+      p.add(new int[]{a+c,b,z1});
+      p.add(new int[]{a+c,b+d,z1});                                                 
+      p.add(new int[]{a,b+d,z1}); 
+      p.add(new int[]{a,b,z1});
     } else {
       return;
     }
@@ -345,18 +367,99 @@ class rectShape extends Shape {
     
  }
 }
+
+class dotShape extends Shape { 
+  
+  
+  int a,b,depth,bitSize;
+  
+
+    dotShape(int a,int b,int depth,int bitSize) {  
+ 
+    super();
+    this.a = a;
+    this.b = b;
+    this.bitSize = bitSize;
+    this.depth = depth;
+  }
+  
+  
+ void dotFill () { 
+  
+    if (a > 0 && a <= width && b > 0 && b<=height){                                                   
+      p.add(new int[]{(int)a,(int)b,(int)depth});                                                 
+    } else {
+      return;
+    }
+   
+   
+    
+ }
+}
+
+// working on ellipse addition
+
+class ellipseShape extends Shape { 
+  
+  int x,y,v,w,z1;
+  float a,b,steps;
+  
+
+  ellipseShape(int x,int y,int a,int b,int steps,int z1) {  
+ 
+    super();
+    this.x = x;
+    this.y = y;
+    this.a = float(a/2);
+    this.b = float(b/2);
+    this.steps = float(steps);
+    this.z1 = z1;
+    
+  }
+  
+  
+ void ellipseFill () { 
+   
+        
+      float angle=TWO_PI/(float)steps;
+      println(degrees(angle));
+    
+      for(int i=1; i<steps; i++) {
+        
+          println("angle:" + degrees(angle)*i);
+          v= (int)((a*b)/sqrt(b*b+a*a*(tan(angle*i))*(tan(angle*i))));
+          w= (int)((a*b*tan(angle*i))/sqrt(b*b+a*a*tan(angle*i)*tan(angle*i)));
+          x += v;
+          y += w;
+          
+          //(int)((a*b)/sqrt(a*a+(b*b/tan(angle*i)*tan(angle*i))));
+          println(x,y); 
+          if (x > 0 && x <= width && y > 0 && y<=height){            //if the point is on the screen add it to the                                                    
+               
+              p.add(new int[]{(int)x,(int)y,z1});                     // int array pair within the shapes array list.
+          } else {
+              //return;
+          }
+        
+        
+      }
+    
+  }
+}
    
   
 
-// end of the rectShape subclass.
+// end of the ellipseShape subclass.
 
 
 // below function is just a control function used to hide/contain new shape/fill/drawPoints
 // so that they cn all be called via the one function from the draw...in a manner like the original bezier
 
-void bezierPlot(int x1,int y1,int c1,int d1,int c2,int d2,int x2,int y2,int steps){
+void bezierPlot(int x1,int y1,int c1,int d1,int c2,int d2,int x2,int y2,int steps,int...z){
  
- beziers = new bezierShape(x1,y1,c1,d1,c2,d2,x2,y2,steps);           //make a new bezier instance
+ int z1 = z.length > 0 ? z[0] : 0;
+  
+ beziers = new bezierShape(x1,y1,c1,d1,c2,d2,x2,y2,steps,z1);           //make a new bezier instance
   shapesList.add(beziers);                                           // add the new shape to a master arrayList of shapes
   beziers.bezierFill();                                              // fill the coordinate arrayList with coords
   beziers.drawPoints();                                              // draw the curve on the screen  
@@ -364,9 +467,12 @@ void bezierPlot(int x1,int y1,int c1,int d1,int c2,int d2,int x2,int y2,int step
   
 }
 
-void linePlot(int x1,int y1,int x2,int y2){
+void linePlot(int x1,int y1,int x2,int y2,int...z){
  
-  lines = new lineShape(x1,y1,x2,y2);           //make a new line instance
+   int z1 = z.length > 0 ? z[0] : 0;
+   int z2 = z.length > 1 ? z[1] : 0;
+  
+  lines = new lineShape(x1,y1,x2,y2,z1,z2);           //make a new line instance
   shapesList.add(lines);                     // add the new shape to a master arrayList of shapes
   lines.lineFill();                        // fill the coordinate arrayList with coords
   lines.drawPoints();                        // draw the line on the screen  
@@ -374,12 +480,41 @@ void linePlot(int x1,int y1,int x2,int y2){
   
 }
 
-void rectPlot(int a,int b,int c,int d){
+void rectPlot(int a,int b,int c,int d,int...z){
  
-  rects = new rectShape(a,b,c,d);           //make a new rect instance
+  int z1 = z.length > 0 ? z[0] : 0;
+  int z2 = z.length > 1 ? z[1] : 0;
+  int z3 = z.length > 2 ? z[2] : 0;
+  int z4 = z.length > 3 ? z[3] : 0;
+  
+  rects = new rectShape(a,b,c,d,z1);           //make a new rect instance
   shapesList.add(rects);                               // add the new shape to a master arrayList of shapes
   rects.rectFill();                                    // fill the coordinate arrayList with coords
   rects.drawPoints();                                  // draw the line on the screen  
+  
+  
+}
+
+
+void dotPlot(int a,int b, int depth, int bitSize){
+ 
+  dots = new dotShape(a,b,depth,bitSize);           //make a new rect instance
+  shapesList.add(dots);                               // add the new shape to a master arrayList of shapes
+  dots.dotFill();                                    // fill the coordinate arrayList with coords
+  dots.drawPoints();                                  // draw the line on the screen  
+  
+  
+}
+
+
+void ellipsePlot(int x,int y,int a,int b,int steps, int...z){
+ 
+   int z1 = z.length > 0 ? z[0] : 0;
+  
+  ellipses = new ellipseShape(x,y,a,b,steps,z1);           //make a new rect instance
+  shapesList.add(ellipses);                               // add the new shape to a master arrayList of shapes
+  ellipses.ellipseFill();                                    // fill the coordinate arrayList with coords
+  ellipses.drawPoints();                                  // draw the line on the screen  
   
   
 }
