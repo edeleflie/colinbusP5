@@ -59,8 +59,13 @@ void draw(){
 
 //bezierTest();
 //imageDots();
+//lineTest();
 
-lineTest();
+//linePlot(100,100,500,100,1);
+//linePlot(100,200,500,200,0);
+//linePlot(100,300,500,300,255);
+//linePlot(100,400,500,400,100);
+//linePlot(100,500,500,500,180);
 
 
 }
@@ -70,7 +75,7 @@ void imageDots() {
   //image dot attempt
 PImage img = loadImage("dmr.png");
 int gridRes=12000;
-drillBit=7;
+drillBit=6;
 img.resize(width,height);
 image(img,0,0);
 filter(GRAY);

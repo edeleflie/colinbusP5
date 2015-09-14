@@ -58,11 +58,13 @@ import processing.serial.*;
   int drillClearance = 100; // height above drilZinit to raise drill by when moving betwen cuts
   int zScale = 3;
   int drillBit = 5;
-  
+  int maxDepth = 100;    // need to work out what the max depth is - probably just need to get depth of board and add 30 until we can sort out something better
   int drillXInit,drillYInit,drillZInit; // intialized zero positions X,Y,Z
   int drillZpos,drillXpos,drillYpos;  // current drill program state
   int xPos,yPos,zPos; //last reported positions in reponse to @OC
   String message; // a generic message variable for tecting/reporting 
+  
+  
 
   Shape shapes; // this is the super class for all drawing.
   bezierShape beziers; // this is sub class for bezier curves - employed because I thought it's be a good test case.
@@ -202,6 +204,8 @@ class Shape {
   
   void printToCNC(){
     int a,b,z;                       // x,y,z  
+    float zQuotient = ((float)(maxDepth-drillCut))/255;
+    println(zQuotient);
   
     message=("@ZD 40.0;" );        // set z move speed.
     myPort.write(message);         // write z move speed to machine
@@ -216,7 +220,8 @@ class Shape {
            a = a*scale+drillXInit;                         // scale x (scale set at head) and add offset based on zeroInit() values (drillXinit)
            b = (p.get(j)[1]);                              // get y coordinate
            b = b*scale+drillYInit;                       // scale y and add offset based in zeroInit() function
-           z = (255-(p.get(j)[2]))/zScale;
+           z = (int)(zQuotient * (255-(p.get(j)[2]))); // (maxDepth-drillCut)/255  = Zquotient
+           
            drillDown = drillZInit + drillCut + z; 
            message=("PA " + (a) +", " + (b) + " ;");       // write point command 
            myPort.write(message);                          // to serial myPort
@@ -471,7 +476,7 @@ void linePlot(int x1,int y1,int x2,int y2,int...z){
  
    int z1 = z.length > 0 ? z[0] : 0;
    int z2 = z.length > 1 ? z[1] : 0;
-  
+  println(z1);
   lines = new lineShape(x1,y1,x2,y2,z1,z2);           //make a new line instance
   shapesList.add(lines);                     // add the new shape to a master arrayList of shapes
   lines.lineFill();                        // fill the coordinate arrayList with coords
