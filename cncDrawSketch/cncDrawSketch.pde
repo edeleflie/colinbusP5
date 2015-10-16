@@ -2,7 +2,7 @@
 
 //Machine and Program Control
 
-// m : machine initialise
+// x : machine initialise
 // z : initialize machine zero point for sketch
 // r : reset machine and all postions including zero init.
 // c : read current drill position
@@ -40,19 +40,26 @@
 // to first initalise the serial port [serialInit()] and secondly to 
 // initialise the machine [machineInit()] and set it to file mode.
 
+Serial myPort;
 
 void setup(){
   
-   //size(600,1400);
-   size(800,600);
-   noLoop();
+  //size(600,1400);
+  size(800,600);
+  noLoop();
    
-// Initialise the serial port and the machine
-   
-   serialInit();
-   machineInit(myPort); 
-   
- }
+  // Initialise the serial port and the machine
+  // Display list of available
+  println("Choose from one of these:");
+  println(Serial.list());
+  println();
+
+  
+  // Initialise the Serial Port by choosing which serial device to go with  
+  myPort = serialInit( 0 );
+  machineInit(myPort);
+  
+}
  
 
 void draw(){
