@@ -16,7 +16,7 @@
 
 //Machine and Program Control
 
-// m : machine initialise
+// x : machine initialise
 // z : initialize machine zero point for sketch
 // r : reset machine and all postions including zero init.
 // c : read current drill position
@@ -49,35 +49,32 @@
 
 import processing.serial.*;
 
-  Serial myPort;
-  
-  int scale = 10; //scale cut to cnc machine - there is there is about 4 pixels to a mm of cut. size of current sketch is set to the dimensions of the test material
-  int drillUp = 0;// absolute Z point to lift drill between cuts its defined by the current z + drillCut + drillClearance
-  int drillCut = 30; //depth of cut - 30 is a good minimum cut for testing etching etc.
-  int drillDown = 0; // absolute Z point to drop drill to cutting depth.
-  int drillClearance = 100; // height above drilZinit to raise drill by when moving betwen cuts
-  int zScale = 3;
-  int drillBit = 5;
-  int maxDepth = 100;    // need to work out what the max depth is - probably just need to get depth of board and add 30 until we can sort out something better
-  int drillXInit,drillYInit,drillZInit; // intialized zero positions X,Y,Z
-  int drillZpos,drillXpos,drillYpos;  // current drill program state
-  int xPos,yPos,zPos; //last reported positions in reponse to @OC
-  String message; // a generic message variable for tecting/reporting 
-  
-  
+//Serial myPort;
 
-  Shape shapes; // this is the super class for all drawing.
-  bezierShape beziers; // this is sub class for bezier curves - employed because I thought it's be a good test case.
-  lineShape lines; 
-  rectShape rects;
-  ellipseShape ellipses;
-  dotShape dots;
+int scale = 10; //scale cut to cnc machine - there is there is about 4 pixels to a mm of cut. size of current sketch is set to the dimensions of the test material
+int drillUp = 0;// absolute Z point to lift drill between cuts its defined by the current z + drillCut + drillClearance
+int drillCut = 30; //depth of cut - 30 is a good minimum cut for testing etching etc.
+int drillDown = 0; // absolute Z point to drop drill to cutting depth.
+int drillClearance = 100; // height above drilZinit to raise drill by when moving betwen cuts
+int zScale = 3;
+int drillBit = 5;
+int maxDepth = 100;    // need to work out what the max depth is - probably just need to get depth of board and add 30 until we can sort out something better
+int drillXInit,drillYInit,drillZInit; // intialized zero positions X,Y,Z
+int drillZpos,drillXpos,drillYpos;  // current drill program state
+int xPos,yPos,zPos; //last reported positions in reponse to @OC
+String message; // a generic message variable for tecting/reporting 
+
+Shape shapes; // this is the super class for all drawing.
+bezierShape beziers; // this is sub class for bezier curves - employed because I thought it's be a good test case.
+lineShape lines; 
+rectShape rects;
+ellipseShape ellipses;
+dotShape dots;
+
+ArrayList<Shape> shapesList  = new ArrayList<Shape>(); 
   
-  ArrayList<Shape> shapesList  = new ArrayList<Shape>(); 
-  
-  //and arrayList that holds all the Shape objects
-  //(which shapes themselves are arraylist series of coordinates)
-  
+//and arrayList that holds all the Shape objects
+//(which shapes themselves are arraylist series of coordinates)
  
 void keyPressed() {
   
@@ -151,7 +148,7 @@ if (key == 'w') {
   } else if (key == 'z'){
    zeroInit(myPort);
   } else if (key == 'v'){
-   MovetoZeroInit();
+   movetoZeroInit();
   }
 }  
   
@@ -481,8 +478,7 @@ void linePlot(int x1,int y1,int x2,int y2,int...z){
   shapesList.add(lines);                     // add the new shape to a master arrayList of shapes
   lines.lineFill();                        // fill the coordinate arrayList with coords
   lines.drawPoints();                        // draw the line on the screen  
-  
-  
+
 }
 
 void rectPlot(int a,int b,int c,int d,int...z){
@@ -553,40 +549,43 @@ void resetProcedure(){                      // print the Reset command to the ma
 
 // Initalise the serial port - called one in setup 
 
-void serialInit(){
- 
-  println(Serial.list());
-   // Open the port you are using at the rate you want:
-   myPort = new Serial(this, Serial.list()[0], 38400, 'Y', 8, 1.0);
-   println("Serial ready");
-   myPort.bufferUntil((char)0x1a); ///ASCII LineFeed.
+Serial serialInit(int serialDeviceNumber){
   
+  // Open the port you are using at the rate you want:
+  Serial somePort = new Serial(this, Serial.list()[serialDeviceNumber], 38400, 'Y', 8, 1.0);
+  
+  println("Serial Port Created using: " + Serial.list()[);
+  
+  // Tell the serial port library to report on Serial input only
+  // once a linefeed has been received (instead of char by char)
+  somePort.bufferUntil((char)0x1a); ///ASCII LineFeed.
+  
+  return somePort;
 }
 
 // Initialise the machine -set file mode - called via X key
 
-void machineInit(Serial myPort){
-    
+void machineInit(Serial passedInPort){
   
   // ASk for MD
   println("Calling MD");
   String message =  (char)0x1b + "MD:" + (char)0x0d + (char)0x1a;
-  myPort.write(message);
+  passedInPort.write(message);
   delay(100);
-  //readResponse(myPort);
+  //readResponse(passedInPort);
 
   println("Calling LM");
   // Set to LM
   message = (char)27 + "FM:" + (char)13 + (char)26;
-  myPort.write( message );
+  passedInPort.write( message );
   delay(100);
-  //readResponse(myPort);
+  //readResponse(passedInPort);
   
   println("Calling MD");
   message =  (char)0x1b + "MD:" + (char)0x0d + (char)0x1a;
-  myPort.write( message );
+  passedInPort.write( message );
   delay(100);
-  //readResponse(myPort);
+  //readResponse(passedInPort);
   
   println("READY");
   
@@ -595,7 +594,7 @@ void machineInit(Serial myPort){
   
   // this function controls all manual drill moves increments and axis defined in keypress
   
-   void drillMove(int increment, char axis){
+void drillMove(int increment, char axis){
 
     
     myPort.write("@ZD 40.0;");// + (char)13 + (char)26 );
@@ -618,7 +617,7 @@ void machineInit(Serial myPort){
  }
  
  
-void MovetoZeroInit(){      
+void movetoZeroInit(){      
      myPort.write("PA " + drillXInit + ", " + drillYInit + ", " + drillZInit +  ";" + (char)13 + (char)26 );
      drillXpos = drillYpos = drillZpos =0;
   }
